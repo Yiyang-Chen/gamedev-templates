@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Canvas Spin</title>
+    <script>
+      window.addEventListener("error", (event) => {
+        if (event.target instanceof Element) return;
+
+        const errorInfo = {
+          type: "scriptError",
+          timestamp: Date.now().toString(),
+          message: event.error?.message || event.message,
+          stack: event.error?.stack || "No stack trace",
+          source: window.location.href,
+        };
+
+        sendErrorViaPostMessage(errorInfo);
+      });
+
+      window.addEventListener("unhandledrejection", (event) => {
+        const errorInfo = {
+          type: "unhandledRejection",
+          timestamp: Date.now().toString(),
+          message: event.reason?.message || String(event.reason),
+          stack: event.reason?.stack || "No stack trace",
+          source: window.location.href,
+        };
+
+        sendErrorViaPostMessage(errorInfo);
+      });
+
+      const originalConsoleError = console.error;
+
+      console.error = function (...args) {
+        originalConsoleError.apply(console, args);
+
+        const errorInfo = args.map((arg) => {
+          return {
+            type: "consoleError",
+            timestamp: Date.now().toString(),
+            source: window.location.href,
+            message: arg instanceof Error ? arg.message : arg.toString(),
+            stack: arg instanceof Error ? arg.stack : null,
+          };
+        });
+
+        sendErrorViaPostMessage(errorInfo);
+      };
+
+      function sendErrorViaPostMessage(errorInfo) {
+        window.parent.postMessage(
+          {
+            type: "adventureGameError",
+            data: errorInfo,
+          },
+          "*"
+        );
+      }
+    </script>
+  </head>
+  <body>
+    <canvas id="stage" aria-label="Rotating square canvas demo"></canvas>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
