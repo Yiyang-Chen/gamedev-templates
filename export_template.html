@@ -322,8 +322,8 @@ window.parent.postMessage(
 			return;
 		}
 		if (mode === 'hidden') {
-			// Don't remove overlay here - let Godot call hideLoadingOverlay when ready
 			initializing = false;
+			window.hideLoadingOverlay();
 			return;
 		}
 		// Modes: 'loading' (default - show overlay with spinner), 'notice' (show error message)
