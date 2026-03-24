@@ -244,9 +244,8 @@ body {
 	letter-spacing: 0.5px;
 }
 
-#status-godot-logo {
-	height: clamp(24px, 5vw, 40px);
-	width: auto;
+#status-powered-by span:last-child {
+	font-size: clamp(12px, 2vw, 16px);
 	opacity: 0.5;
 }
 		</style>
@@ -270,7 +269,7 @@ $GODOT_HEAD_INCLUDE
 			<div id="status-notice"></div>
 			<div id="status-powered-by">
 				<span>Powered by</span>
-				<img id="status-godot-logo" src="godot_logo.png" alt="Godot Engine">
+				<span>Godot Engine</span>
 			</div>
 		</div>
 
@@ -290,12 +289,6 @@ $GODOT_HEAD_INCLUDE
 const GODOT_CONFIG = $GODOT_CONFIG;
 const GODOT_THREADS_ENABLED = $GODOT_THREADS_ENABLED;
 const engine = new Engine(GODOT_CONFIG);
-
-// ========================================
-// Loading PCK Management (for HTML pre-caching)
-// ========================================
-// Godot reads this directly via JavaScriptBridge.eval("window.loadingPckFile")
-window.loadingPckFile = null;  // e.g., "loading_abc123.pck"
 
 // Supply Godot with function to hide HTML loading overlay
 window.hideLoadingOverlay = function() {
@@ -396,40 +389,12 @@ window.parent.postMessage(
 			displayFailureNotice(missingMsg + missing.join('\n'));
 		}
 	} else {
-		// Show loading status
 		setStatusMode('loading');
-		
-		// Load loading_pck.json to get PCK filename BEFORE starting engine
-		// This ensures window.loadingPckFile is set when Godot reads it
-		console.log('[HTML] Fetching loading_pck.json...');
-		fetch('loading_pck.json?t=' + Date.now())
-			.then(response => {
-				if (!response.ok) {
-					throw new Error('Failed to fetch loading_pck.json: ' + response.status);
-				}
-				return response.json();
-			})
-			.then((info) => {
-				// Store loading.pck filename for Godot to read
-				// Godot's ResourceSystem will download the PCK via HTTPRequest
-				const loadingFile = info.file;
-				window.loadingPckFile = loadingFile || '';
-				console.log('[HTML] loading_pck.json loaded:', loadingFile);
-			})
-			.catch((err) => {
-				console.error('[HTML] loading_pck.json loading failed:', err);
-				// Set empty string so Godot knows there's no loading.pck
-				window.loadingPckFile = '';
-			})
-			.finally(() => {
-				// Start engine AFTER loading_pck.json is processed
-				console.log('[HTML] Starting Godot engine...');
-				engine.startGame({
-					// No onProgress callback - we don't show progress bar
-				}).then(() => {
-					setStatusMode('hidden');
-				}, displayFailureNotice);
-			});
+
+		console.log('[HTML] Starting Godot engine...');
+		engine.startGame({}).then(() => {
+			setStatusMode('hidden');
+		}, displayFailureNotice);
 	}
 }());
 		</script>
