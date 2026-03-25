@@ -1,39 +1,37 @@
 import './styles.css';
 
-import { createCamera } from './core/createCamera.js';
-import { createLights } from './core/createLights.js';
-import { createRenderer } from './core/createRenderer.js';
-import { createScene } from './core/createScene.js';
-import { createRenderLoop } from './loop/createRenderLoop.js';
-import { createFloor } from './objects/createFloor.js';
-import { createShowcaseCube } from './objects/createShowcaseCube.js';
-import { InputManager } from './core/InputManager.js';
-import { createKeyboardCameraControls } from './system/createKeyboardCameraControls.js';
-import { setupResize } from './system/setupResize.js';
+import * as THREE from 'three';
+import { Game } from './game/Game.js';
 
-const scene = createScene();
-const camera = createCamera();
-const renderer = createRenderer();
+const container = document.getElementById('app');
 
-const { ambient, main: mainLight } = createLights();
-scene.add(ambient, mainLight);
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.1;
+container.appendChild(renderer.domElement);
 
-const { mesh: showcaseCube, update: updateCube } = createShowcaseCube();
-scene.add(showcaseCube);
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
 
-const floor = createFloor();
-scene.add(floor);
+const game = new Game({ scene, camera, renderer, container });
 
-setupResize({ renderer, camera });
+const clock = new THREE.Clock();
 
-const input = new InputManager();
-const cameraControls = createKeyboardCameraControls({ camera, input });
+function animate() {
+  requestAnimationFrame(animate);
+  const dt = Math.min(clock.getDelta(), 0.05);
+  game.update(dt);
+  renderer.render(scene, camera);
+}
 
-const startRenderLoop = createRenderLoop({
-  renderer,
-  scene,
-  camera,
-  updatables: [updateCube, cameraControls.update],
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-startRenderLoop();
+animate();
