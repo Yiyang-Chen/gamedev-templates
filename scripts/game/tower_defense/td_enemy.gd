@@ -33,7 +33,8 @@ func setup(et: int, path: Array[Vector2], hp_mult: float = 1.0, speed_mult: floa
 	move_speed = stats.speed * speed_mult
 	reward = stats.reward
 	enemy_size = stats.size
-	_body_color = TDGameData.ENEMY_COLORS[et]
+	@warning_ignore("unsafe_cast")
+	_body_color = TDGameData.ENEMY_COLORS[et] as Color
 	
 	if path_points.size() > 0:
 		position = path_points[0]

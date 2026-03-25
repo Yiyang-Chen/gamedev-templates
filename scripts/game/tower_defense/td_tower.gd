@@ -28,8 +28,10 @@ func setup(tt: int, gp: Vector2i, enemies: Node, projectiles: Node) -> void:
 	projectiles_container = projectiles
 	level = 0
 	_stats = TDGameData.get_tower_stats(tower_type, level)
-	_body_color = TDGameData.TOWER_COLORS[tower_type]
-	_accent_color = TDGameData.TOWER_ACCENT_COLORS[tower_type]
+	@warning_ignore("unsafe_cast")
+	_body_color = TDGameData.TOWER_COLORS[tower_type] as Color
+	@warning_ignore("unsafe_cast")
+	_accent_color = TDGameData.TOWER_ACCENT_COLORS[tower_type] as Color
 	position = Vector2(
 		gp.x * TDGameData.TILE_SIZE + TDGameData.TILE_SIZE / 2,
 		gp.y * TDGameData.TILE_SIZE + TDGameData.TILE_SIZE / 2
@@ -58,7 +60,9 @@ func upgrade() -> void:
 		return
 	level += 1
 	_stats = TDGameData.get_tower_stats(tower_type, level)
-	_body_color = TDGameData.TOWER_COLORS[tower_type].lightened(0.05 * float(level))
+	@warning_ignore("unsafe_cast")
+	var base_color: Color = TDGameData.TOWER_COLORS[tower_type] as Color
+	_body_color = base_color.lightened(0.05 * float(level))
 	queue_redraw()
 
 func show_range(visible_flag: bool) -> void:
@@ -66,6 +70,8 @@ func show_range(visible_flag: bool) -> void:
 	queue_redraw()
 
 func _process(delta: float) -> void:
+	if _stats == null:
+		return
 	_anim_time += delta
 	if _attack_flash > 0.0:
 		_attack_flash -= delta
@@ -109,12 +115,14 @@ func _fire() -> void:
 
 	var proj: TDProjectile = TDProjectile.new()
 	proj.position = position
-	proj.setup(_target, tower_type, _stats.damage, _stats.special_value)
+	proj.setup(_target, tower_type, _stats.damage, _stats.special_value, enemies_container)
 	projectiles_container.add_child(proj)
 	_attack_flash = 0.15
 	tower_fired.emit(self, _target)
 
 func _draw() -> void:
+	if _stats == null:
+		return
 	if _range_circle_visible:
 		draw_arc(Vector2.ZERO, _stats.attack_range, 0, TAU, 48, Color(1, 1, 1, 0.15), 1.5)
 		draw_circle(Vector2.ZERO, _stats.attack_range, Color(1, 1, 1, 0.05))

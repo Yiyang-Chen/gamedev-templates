@@ -8,6 +8,7 @@ var damage: float = 10.0
 var speed: float = 300.0
 var _color: Color = Color.BLACK
 var _size: float = 4.0
+var enemies_container: Node = null
 
 ## Watermelon/Orange: splash radius; Strawberry: slow factor; Pineapple: pierce count
 var special_value: float = 0.0
@@ -22,12 +23,14 @@ var _distance_traveled: float = 0.0
 
 signal projectile_finished(proj: TDProjectile)
 
-func setup(t: TDEnemy, tt: int, dmg: float, sv: float) -> void:
+func setup(t: TDEnemy, tt: int, dmg: float, sv: float, enemies_node: Node = null) -> void:
 	target = t
 	tower_type = tt
 	damage = dmg
 	special_value = sv
-	_color = TDGameData.TOWER_PROJECTILE_COLORS[tt]
+	enemies_container = enemies_node
+	@warning_ignore("unsafe_cast")
+	_color = TDGameData.TOWER_PROJECTILE_COLORS[tt] as Color
 
 	match tt:
 		TDGameData.TowerType.WATERMELON:
@@ -47,8 +50,6 @@ func setup(t: TDEnemy, tt: int, dmg: float, sv: float) -> void:
 			_size = 6.0
 			speed = 250.0
 			_max_range = special_value * 60.0
-			if target:
-				_direction = (target.position - position).normalized()
 
 	if target and is_instance_valid(target):
 		_direction = (target.position - position).normalized()
@@ -87,13 +88,11 @@ func _process_piercing(delta: float) -> void:
 		_destroy()
 		return
 
-	# Check collisions with all enemies in range
-	var enemies_node: Node = get_parent()
-	if enemies_node == null:
+	if enemies_container == null:
 		_destroy()
 		return
 
-	for child: Node in enemies_node.get_children():
+	for child: Node in enemies_container.get_children():
 		if child is TDEnemy:
 			@warning_ignore("unsafe_cast")
 			var enemy: TDEnemy = child as TDEnemy
@@ -110,32 +109,35 @@ func _on_hit_target() -> void:
 		TDGameData.TowerType.WATERMELON:
 			_splash_damage(special_value)
 		TDGameData.TowerType.STRAWBERRY:
-			target.take_damage(damage)
-			target.apply_slow(special_value, slow_duration)
+			if target and is_instance_valid(target):
+				target.take_damage(damage)
+				target.apply_slow(special_value, slow_duration)
 		TDGameData.TowerType.ORANGE:
 			_splash_damage(special_value)
 		TDGameData.TowerType.GRAPE:
-			target.take_damage(damage)
+			if target and is_instance_valid(target):
+				target.take_damage(damage)
 		_:
-			target.take_damage(damage)
+			if target and is_instance_valid(target):
+				target.take_damage(damage)
 
 	_destroy()
 
 func _splash_damage(radius: float) -> void:
-	var enemies_node: Node = get_parent()
-	if enemies_node == null:
+	if enemies_container == null:
 		if target and is_instance_valid(target):
 			target.take_damage(damage)
 		return
 
-	for child: Node in enemies_node.get_children():
+	for child: Node in enemies_container.get_children():
 		if child is TDEnemy:
 			@warning_ignore("unsafe_cast")
 			var enemy: TDEnemy = child as TDEnemy
 			if enemy.is_dead:
 				continue
-			if position.distance_to(enemy.position) <= radius:
-				var dist_ratio: float = 1.0 - (position.distance_to(enemy.position) / radius) * 0.5
+			var d: float = position.distance_to(enemy.position)
+			if d <= radius:
+				var dist_ratio: float = 1.0 - (d / radius) * 0.5
 				enemy.take_damage(damage * dist_ratio)
 
 func _destroy() -> void:

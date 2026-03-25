@@ -13,10 +13,13 @@ func setup() -> void:
 func get_cell_type(col: int, row: int) -> int:
 	if row < 0 or row >= _layout.size() or col < 0:
 		return TDGameData.CellType.BLOCKED
-	var map_row: Array = _layout[row]
+	@warning_ignore("unsafe_cast")
+	var map_row: Array = _layout[row] as Array
 	if col >= map_row.size():
 		return TDGameData.CellType.BLOCKED
-	return map_row[col]
+	@warning_ignore("unsafe_cast")
+	var cell_val: int = map_row[col] as int
+	return cell_val
 
 func is_buildable(col: int, row: int) -> bool:
 	var ct: int = get_cell_type(col, row)
@@ -41,9 +44,11 @@ func _draw() -> void:
 	rng.seed = _decoration_seed
 
 	for row: int in range(_layout.size()):
-		var map_row: Array = _layout[row]
+		@warning_ignore("unsafe_cast")
+		var map_row: Array = _layout[row] as Array
 		for col: int in range(map_row.size()):
-			var cell: int = map_row[col]
+			@warning_ignore("unsafe_cast")
+			var cell: int = map_row[col] as int
 			var rect: Rect2 = Rect2(float(col) * ts, float(row) * ts, ts, ts)
 
 			match cell:

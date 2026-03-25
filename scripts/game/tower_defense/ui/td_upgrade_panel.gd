@@ -68,9 +68,10 @@ func _draw() -> void:
 	draw_rect(Rect2(Vector2.ZERO, size), Color(0.5, 0.7, 0.5, 0.3), false, 2.0)
 
 	# Tower name and level
-	var name: String = TDGameData.TOWER_NAMES[_tower.tower_type]
+	@warning_ignore("unsafe_cast")
+	var tower_name: String = TDGameData.TOWER_NAMES[_tower.tower_type] as String
 	var level_text: String = " Lv.%d" % (_tower.level + 1)
-	draw_string(font, Vector2(8, 18), name + level_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color(1.0, 0.9, 0.5))
+	draw_string(font, Vector2(8, 18), tower_name + level_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color(1.0, 0.9, 0.5))
 
 	# Stats
 	var stats_text: String = "伤害: %.0f  范围: %.0f  攻速: %.1f" % [stats.damage, stats.attack_range, stats.attack_speed]

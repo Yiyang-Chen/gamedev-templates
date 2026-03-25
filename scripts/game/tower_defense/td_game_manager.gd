@@ -25,9 +25,30 @@ var _path_world_points: Array[Vector2] = []
 
 var _build_preview_pos: Vector2i = Vector2i(-1, -1)
 var _build_preview_valid: bool = false
+var _start_screen: TDStartScreen = null
+var _game_started: bool = false
 
 
 func _ready() -> void:
+	_show_start_screen()
+
+
+func _show_start_screen() -> void:
+	_game_started = false
+	_clear_children()
+
+	var ui_layer: CanvasLayer = CanvasLayer.new()
+	ui_layer.name = "StartUILayer"
+	ui_layer.layer = 10
+	add_child(ui_layer)
+
+	_start_screen = TDStartScreen.new()
+	_start_screen.start_game_requested.connect(_on_start_game)
+	ui_layer.add_child(_start_screen)
+
+
+func _on_start_game() -> void:
+	_game_started = true
 	_setup_game()
 
 
@@ -50,6 +71,7 @@ func _setup_game() -> void:
 
 func _clear_children() -> void:
 	for child: Node in get_children():
+		remove_child(child)
 		child.queue_free()
 
 
@@ -136,16 +158,15 @@ func _create_wave_manager() -> void:
 
 
 func _process(delta: float) -> void:
-	if _game_over:
+	if not _game_started or _game_over:
 		return
 
-	var scaled_delta: float = delta * _game_speed
-	_wave_manager.process(scaled_delta, _enemies_container)
+	_wave_manager.process(delta, _enemies_container)
 	_update_ui()
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if _game_over:
+	if not _game_started or _game_over:
 		return
 
 	if event is InputEventMouseButton:
@@ -175,7 +196,8 @@ func _handle_click(screen_pos: Vector2) -> void:
 	# Check if clicking an existing tower
 	var key: String = "%d_%d" % [cell.x, cell.y]
 	if _placed_towers.has(key):
-		var tower: TDTower = _placed_towers[key]
+		@warning_ignore("unsafe_cast")
+		var tower: TDTower = _placed_towers[key] as TDTower
 		_upgrade_panel.show_for_tower(tower, _gold)
 		_tower_panel.deselect()
 		_selected_tower_type = -1
@@ -250,10 +272,18 @@ func _on_enemy_spawned(enemy: TDEnemy) -> void:
 func _on_enemy_killed(enemy: TDEnemy) -> void:
 	_gold += enemy.reward
 	_update_ui()
-	# Delayed cleanup
-	var tween: Tween = create_tween()
-	tween.tween_property(enemy, "modulate:a", 0.0, 0.3)
-	tween.tween_callback(enemy.queue_free)
+	# Death effect
+	@warning_ignore("unsafe_cast")
+	var death_color: Color = TDGameData.ENEMY_COLORS[enemy.enemy_type] as Color
+	var effect: TDEffect = TDEffect.new()
+	effect.spawn_death_effect(enemy.position, death_color, 8)
+	_enemies_container.add_child(effect)
+	# Coin effect
+	var coin_fx: TDEffect = TDEffect.new()
+	coin_fx.spawn_coin_effect(enemy.position + Vector2(0, -10))
+	_enemies_container.add_child(coin_fx)
+	# Remove enemy
+	enemy.queue_free()
 
 
 func _on_enemy_reached_end(enemy: TDEnemy) -> void:
@@ -331,7 +361,7 @@ func _on_upgrade_panel_closed() -> void:
 
 func _on_retry() -> void:
 	Engine.time_scale = 1.0
-	_setup_game()
+	_show_start_screen()
 
 
 # ========================================

@@ -129,8 +129,11 @@ static func get_tower_stats(tower_type: int, level: int) -> TowerStats:
 		],
 	}
 	var clamped_level: int = clampi(level, 0, 3)
-	var stats_array: Array = _data[tower_type]
-	return stats_array[clamped_level]
+	@warning_ignore("unsafe_cast")
+	var stats_array: Array = _data[tower_type] as Array
+	@warning_ignore("unsafe_cast")
+	var result: TowerStats = stats_array[clamped_level] as TowerStats
+	return result
 
 # ========================================
 # Enemy Types
@@ -180,7 +183,9 @@ static func get_enemy_stats(enemy_type: int) -> EnemyStats:
 		EnemyType.LOCUST: EnemyStats.new(50.0, 80.0, 10, 0.8),
 		EnemyType.BOSS_SPIDER: EnemyStats.new(500.0, 25.0, 50, 2.0),
 	}
-	return _data[enemy_type]
+	@warning_ignore("unsafe_cast")
+	var result: EnemyStats = _data[enemy_type] as EnemyStats
+	return result
 
 # ========================================
 # Wave Configuration

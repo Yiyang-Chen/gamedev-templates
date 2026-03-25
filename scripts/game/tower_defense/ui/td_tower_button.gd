@@ -14,7 +14,11 @@ func setup(tt: int) -> void:
 	tower_type = tt
 	custom_minimum_size = Vector2(60, 72)
 	mouse_filter = Control.MOUSE_FILTER_STOP
-	tooltip_text = TDGameData.TOWER_NAMES[tt] + "\n" + TDGameData.TOWER_DESCRIPTIONS[tt]
+	@warning_ignore("unsafe_cast")
+	var tower_name: String = TDGameData.TOWER_NAMES[tt] as String
+	@warning_ignore("unsafe_cast")
+	var tower_desc: String = TDGameData.TOWER_DESCRIPTIONS[tt] as String
+	tooltip_text = tower_name + "\n" + tower_desc
 
 func set_affordable(can_afford: bool) -> void:
 	_affordable = can_afford
@@ -59,8 +63,10 @@ func _draw() -> void:
 	# Tower icon
 	var center: Vector2 = Vector2(size.x / 2.0, size.y / 2.0 - 8.0)
 	var icon_r: float = 14.0
-	var tc: Color = TDGameData.TOWER_COLORS[tower_type]
-	var ac: Color = TDGameData.TOWER_ACCENT_COLORS[tower_type]
+	@warning_ignore("unsafe_cast")
+	var tc: Color = TDGameData.TOWER_COLORS[tower_type] as Color
+	@warning_ignore("unsafe_cast")
+	var ac: Color = TDGameData.TOWER_ACCENT_COLORS[tower_type] as Color
 	if not _affordable:
 		tc = tc.darkened(0.4)
 		ac = ac.darkened(0.4)
