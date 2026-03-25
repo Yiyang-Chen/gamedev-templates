@@ -6,7 +6,6 @@ import { ParticleSystem } from './ParticleSystem.js';
 import { UI } from './UI.js';
 import {
   TOWER_TYPES, STARTING_COINS, STARTING_LIVES,
-  GRID_SIZE, MAP_COLS, MAP_ROWS,
 } from './GameConfig.js';
 
 export class Game {
@@ -91,10 +90,9 @@ export class Game {
     this.scene.background = new THREE.Color(0x88ccff);
     this.scene.fog = new THREE.Fog(0x88ccff, 15, 30);
 
-    const existing = this.scene.children.filter(c =>
-      c.isLight || c.name === 'ShowcaseCube' || c.name === 'Floor'
-    );
-    existing.forEach(c => this.scene.remove(c));
+    while (this.scene.children.length > 0) {
+      this.scene.remove(this.scene.children[0]);
+    }
 
     const ambient = new THREE.AmbientLight(0xffffff, 0.6);
     this.scene.add(ambient);
@@ -135,9 +133,11 @@ export class Game {
     this._onMouseMove = (e) => this._handleMouseMove(e);
     this._onClick = (e) => this._handleClick(e);
     this._onKeyDown = (e) => this._handleKeyDown(e);
+    this._onWheel = (e) => this._handleWheel(e);
 
     this.renderer.domElement.addEventListener('mousemove', this._onMouseMove);
     this.renderer.domElement.addEventListener('click', this._onClick);
+    this.renderer.domElement.addEventListener('wheel', this._onWheel, { passive: false });
     window.addEventListener('keydown', this._onKeyDown);
   }
 
@@ -205,6 +205,16 @@ export class Game {
       this._removePlacementPreview();
       this.ui.hideInfoPanel();
     }
+  }
+
+  _handleWheel(e) {
+    e.preventDefault();
+    const zoomSpeed = 0.5;
+    const dir = new THREE.Vector3();
+    this.camera.getWorldDirection(dir);
+    const delta = e.deltaY > 0 ? -zoomSpeed : zoomSpeed;
+    this.camera.position.addScaledVector(dir, delta);
+    this.camera.position.y = Math.max(5, Math.min(20, this.camera.position.y));
   }
 
   _showPlacementPreview(type) {
@@ -382,6 +392,7 @@ export class Game {
   dispose() {
     this.renderer.domElement.removeEventListener('mousemove', this._onMouseMove);
     this.renderer.domElement.removeEventListener('click', this._onClick);
+    this.renderer.domElement.removeEventListener('wheel', this._onWheel);
     window.removeEventListener('keydown', this._onKeyDown);
 
     this.waveManager.dispose();

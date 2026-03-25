@@ -1,7 +1,5 @@
 import * as THREE from 'three';
 
-const _v = new THREE.Vector3();
-
 function makeMat(color, opts = {}) {
   return new THREE.MeshStandardMaterial({
     color,
