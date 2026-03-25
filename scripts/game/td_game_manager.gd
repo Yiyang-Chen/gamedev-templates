@@ -253,4 +253,6 @@ func _try_place_tower(cell: Vector2i) -> void:
 
 
 func _can_build_at(cell: Vector2i) -> bool:
-	return TDData.is_buildable(cell.x, cell.y)
+	if cell.x < 0 or cell.x >= TDData.GRID_COLS or cell.y < 0 or cell.y >= TDData.GRID_ROWS:
+		return false
+	return true
